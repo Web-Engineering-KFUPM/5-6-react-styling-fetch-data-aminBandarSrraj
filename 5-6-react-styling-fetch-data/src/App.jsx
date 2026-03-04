@@ -86,7 +86,7 @@ Requirements (write EXACT behavior):
 6) On error:
    setError(err.message)
 7) Always (finally):
-   setLoading(false)
+  setError(err.message)
 
 Hint:
 - Use an async function inside useEffect, then call it.
@@ -203,7 +203,29 @@ export default function App() {
      Implement fetch logic inside this useEffect.
      ========================================================= */
   useEffect(() => {
-    // TODO 2.1: Implement fetching users here (see lab instructions)
+    async function fetchSomething() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch(
+          "https://jsonplaceholder.typicode.com/users",
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch users");
+        }
+
+        const result = await response.json();
+        setUsers(result); // assuming you have setUsers state
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchSomething();
   }, []);
 
   /* =========================================================
@@ -215,9 +237,19 @@ export default function App() {
      ========================================================= */
   useEffect(() => {
     // TODO 2.2: Implement filtering users here (see lab instructions)
-  }, [searchTerm, users]);
 
-  // Modal handlers (already complete)
+    if (!searchTerm) {
+      setFilteredUsers(users);
+    } else {
+      const filtered = users.filter((user) =>
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+
+      setFilteredUsers(filtered);
+    }
+  }, [searchTerm, users]);
+  useEffect(() => {}, [searchTerm, users]);
+
   function handleUserClick(user) {
     setSelectedUser(user);
     setShowModal(true);
@@ -250,7 +282,11 @@ export default function App() {
           <UserList users={filteredUsers} onUserClick={handleUserClick} />
         )}
 
-        <UserModal show={showModal} user={selectedUser} onHide={handleCloseModal} />
+        <UserModal
+          show={showModal}
+          user={selectedUser}
+          onHide={handleCloseModal}
+        />
       </Container>
 
       {/* TODO 1.1: Set footer className EXACTLY as in lab instructions */}
